@@ -7,10 +7,10 @@ import akka.actor.ActorSystem
 import akka.cluster.Cluster
 import com.google.inject.Guice
 import com.lightbend.lagom.javadsl.cluster.testkit.ActorSystemModule
-import com.lightbend.lagom.javadsl.persistence.{ NamedEntity, TestEntity }
+import com.lightbend.lagom.javadsl.persistence.{NamedEntity, TestEntity}
 import com.typesafe.config.ConfigFactory
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.{ BeforeAndAfterAll, FlatSpec, Matchers }
+import org.scalatest.{BeforeAndAfterAll, FlatSpec, Matchers}
 
 class AbstractPersistentEntityRegistrySpec
   extends FlatSpec
@@ -39,9 +39,7 @@ class AbstractPersistentEntityRegistrySpec
 
   def withRegistry[T](block: (AbstractPersistentEntityRegistry) => T): T = {
     val injector = Guice.createInjector(new ActorSystemModule(system))
-    val registry = new AbstractPersistentEntityRegistry(system, injector) {
-      override protected val journalId = "testing-journal"
-    }
+    val registry = new AbstractPersistentEntityRegistry(system, injector)
     block(registry)
   }
 

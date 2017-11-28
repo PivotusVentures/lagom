@@ -19,7 +19,7 @@ object AbstractPersistentEntityActorSpec {
   class TestPassivationParent extends Actor {
 
     val child = context.actorOf(PersistentEntityActor.props("test", Optional.of("1"),
-      () => new TestEntity(context.system), Optional.empty(), 1.second))
+      () => new TestEntity(context.system), Optional.empty(), 1.second, "", ""))
 
     def receive = {
       case ShardRegion.Passivate(stopMsg) =>
@@ -35,7 +35,7 @@ trait AbstractPersistentEntityActorSpec { spec: ActorSystemSpec =>
   "PersistentEntityActor" must {
     "persist events" in {
       val p = system.actorOf(PersistentEntityActor.props("test", Optional.of("1"),
-        () => new TestEntity(system), Optional.empty(), 10.seconds))
+        () => new TestEntity(system), Optional.empty(), 10.seconds, "", ""))
       p ! TestEntity.Get.instance
       val state = expectMsgType[TestEntity.State]
       state.getElements.size should ===(0)
@@ -51,7 +51,7 @@ trait AbstractPersistentEntityActorSpec { spec: ActorSystemSpec =>
 
       // start another with same persistenceId should recover state
       val p2 = system.actorOf(PersistentEntityActor.props("test", Optional.of("1"),
-        () => new TestEntity(system), Optional.empty(), 10.seconds))
+        () => new TestEntity(system), Optional.empty(), 10.seconds, "", ""))
       p2 ! TestEntity.Get.instance
       val state3 = expectMsgType[TestEntity.State]
       state3.getElements.asScala.toList should ===(List("A", "B", "C"))
@@ -59,7 +59,7 @@ trait AbstractPersistentEntityActorSpec { spec: ActorSystemSpec =>
 
     "be able to change behavior" in {
       val p = system.actorOf(PersistentEntityActor.props("test", Optional.of("2"),
-        () => new TestEntity(system), Optional.empty(), 10.seconds))
+        () => new TestEntity(system), Optional.empty(), 10.seconds, "", ""))
       p ! TestEntity.Get.instance
       val state = expectMsgType[TestEntity.State]
       state.getMode() should ===(TestEntity.Mode.APPEND)
@@ -77,7 +77,7 @@ trait AbstractPersistentEntityActorSpec { spec: ActorSystemSpec =>
 
       // start another with same persistenceId should recover state
       val p2 = system.actorOf(PersistentEntityActor.props("test", Optional.of("2"),
-        () => new TestEntity(system), Optional.empty(), 10.seconds))
+        () => new TestEntity(system), Optional.empty(), 10.seconds, "", ""))
       p2 ! TestEntity.Get.instance
       val state3 = expectMsgType[TestEntity.State]
       state3.getMode() should ===(TestEntity.Mode.PREPEND)
@@ -100,13 +100,13 @@ trait AbstractPersistentEntityActorSpec { spec: ActorSystemSpec =>
     "notify when recovery is completed" in {
       val probe = TestProbe()
       val p = system.actorOf(PersistentEntityActor.props("test", Optional.of("3"),
-        () => new TestEntity(system, probe.ref), Optional.empty(), 10.seconds))
+        () => new TestEntity(system, probe.ref), Optional.empty(), 10.seconds, "", ""))
       probe.expectMsgType[TestEntity.AfterRecovery]
     }
 
     "save snapshots" in {
       val p = system.actorOf(PersistentEntityActor.props("test", Optional.of("4"),
-        () => new TestEntity(system), Optional.of(3), 10.seconds))
+        () => new TestEntity(system), Optional.of(3), 10.seconds, "", ""))
       for (n <- 1 to 10) {
         p ! TestEntity.Add.of(n.toString)
         expectMsg(new TestEntity.Appended("4", n.toString))
@@ -119,7 +119,7 @@ trait AbstractPersistentEntityActorSpec { spec: ActorSystemSpec =>
 
           val probe2 = TestProbe()
           val p2 = system.actorOf(PersistentEntityActor.props("test", Optional.of("4"),
-            () => new TestEntity(system, probe2.ref), Optional.of(3), 10.seconds))
+            () => new TestEntity(system, probe2.ref), Optional.of(3), 10.seconds, "", ""))
           probe2.expectMsgType[TestEntity.Snapshot]
           p2 ! TestEntity.Get.instance
           val state2 = expectMsgType[TestEntity.State]
@@ -130,7 +130,7 @@ trait AbstractPersistentEntityActorSpec { spec: ActorSystemSpec =>
 
     "persist several events from one command" in {
       val p = system.actorOf(PersistentEntityActor.props("test", Optional.of("5"),
-        () => new TestEntity(system), Optional.empty(), 10.seconds))
+        () => new TestEntity(system), Optional.empty(), 10.seconds, "", ""))
       p ! new TestEntity.Add("a", 3)
       expectMsg(new TestEntity.Appended("5", "A"))
       p ! TestEntity.Get.instance
